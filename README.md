@@ -50,7 +50,7 @@ Installation
 Clone the repository
 
 bash
-git clone https://github.com/your-username/onion-onion-clone.git
+git clone https://github.com/iam-johnhardy/onion-onion-clone.git
 cd onion-onion-clone
 Install dependencies
 
