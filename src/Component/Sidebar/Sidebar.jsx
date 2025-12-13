@@ -56,12 +56,12 @@ const Sidebar = () => {
     };
 
     return (
-        <div className="h-screen inline-flex flex-col justify-between bg-[#f0f4f9] p-4  text-gray-800">
-            <div className="top ">
-                <GiAtomicSlashes onClick={toggleSidebar} className='cursor-pointer w-7 h-7'/>
+        <div className="min-h-screen max-w-[200px] inline-flex flex-col justify-between bg-[#f0f4f9] p-4  text-gray-800">
+            <div className="">
+                <GiAtomicSlashes onClick={toggleSidebar} className='cursor-pointer w-5 md:w-7 h-5 md:h-7'/>
                 <div className="text-gray-400 flex items-center mt-6 p-2 bg-[#e6eaf1] rounded-2xl gap-2">
-                    <BsPlusLg  className='cursor-pointer'/>
-                    {extended ? <p>New Chat</p> : null}
+                    <BsPlusLg  className='cursor-pointer w-3 h-3 '/>
+                    {extended ? <p className='text-[7px] md:text-[12px]'>New Chat</p> : null}
                 </div>
                 {extended ?
                 <div className=" flex flex-col mt-6 gap-4">
@@ -72,7 +72,7 @@ const Sidebar = () => {
                         history.map((item) => (
                             <div key={item.id} className=" flex items-center gap-2 cursor-pointer text-[#282828] rounded-md hover:bg-gray-200 p-2" onClick={() => handleSelect(item)}>
                                 <FaRegMessage className='cursor-pointer'/>
-                                <p className="recent-name text-[13px] truncate">{item.prompt}</p>
+                                <p className="text-[7px] md:text-[13px] truncate">{item.prompt}</p>
                             </div>
                         ))
                     )}
