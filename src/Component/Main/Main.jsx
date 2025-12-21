@@ -9,6 +9,34 @@ import { GiAtomicSlashes } from "react-icons/gi";
 import { FaMicrophoneAlt } from "react-icons/fa";
 import { callGenAI } from '../../utils/genai';
 
+// Typing effect hook
+const useTypeWriter = (text, isActive) => {
+    const [displayedText, setDisplayedText] = useState('');
+    
+    useEffect(() => {
+        if (!isActive) {
+            setDisplayedText(text);
+            return;
+        }
+        
+        let index = 0;
+        setDisplayedText('');
+        
+        const interval = setInterval(() => {
+            if (index < text.length) {
+                setDisplayedText(text.substring(0, index + 1));
+                index++;
+            } else {
+                clearInterval(interval);
+            }
+        }, 10); // Adjust speed (lower = faster)
+        
+        return () => clearInterval(interval);
+    }, [text, isActive]);
+    
+    return displayedText;
+};
+
 
 const Main = () => {
     const [prompt, setPrompt] = useState('');
@@ -20,20 +48,26 @@ const Main = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [prevPrompts, setPrevPrompts] = useState([])
+    const [isTyping, setIsTyping] = useState(false);
     const fileInputRef = useRef(null);
+    
+    // Use the typing effect hook
+    const displayedResponse = useTypeWriter(response, isTyping);
 
     const handleSend = async () => {
         if (!prompt.trim()) return;
 
         setLoading(true);
         setError('');
-        setResponse('');        
+        setResponse('');
+        setIsTyping(false);
         // remember the prompt that is being sent so we can display it above
         // the response even after clearing the input box
         setLastPrompt(prompt);
         try {
             const result = await callGenAI(prompt);
             setResponse(result);
+            setIsTyping(true); // Start typing effect when response arrives
             // save to history (most recent first)
             const entry = { id: Date.now(), prompt: prompt, response: result };
             setPrevPrompts((p) => [entry, ...p]);
@@ -61,10 +95,12 @@ const Main = () => {
         setLoading(true);
         setError('');
         setResponse('');
+        setIsTyping(false);
         setLastPrompt(suggestionText);
         try {
             const result = await callGenAI(suggestionText);
             setResponse(result);
+            setIsTyping(true); // Start typing effect
             const entry = { id: Date.now(), prompt: suggestionText, response: result };
             setPrevPrompts((p) => [entry, ...p]);
         } catch (err) {
@@ -87,7 +123,8 @@ const Main = () => {
         try {
             localStorage.setItem('onions_prompt_history', JSON.stringify(prevPrompts));
             // notify other parts of the app (Sidebar) that history changed
-            try { window.dispatchEvent(new CustomEvent('onions:historyUpdated', { detail: prevPrompts })); } catch (e) {}
+            try { window.dispatchEvent(new CustomEvent('onions:historyUpdated', { detail: prevPrompts })); 
+        } catch (e) {}
         } catch (e) {
         }
     }, [prevPrompts]);
@@ -109,8 +146,8 @@ const Main = () => {
     }, []);
 
     return (
-        <div className="lg:w-[1300px] md:w-[700px] w-full mx-auto pl-30 flex flex-col">
-            <nav className="flex gap-[10em] md:gap-[25em] lg:gap-[59em] items-center text-[#585858] px-10 py-5">
+        <div className="lg:w-[1300px] md:w-[700px] w-full mx-auto md:pl-30 flex flex-col">
+            <nav className="flex gap-[17em] md:gap-[25em] lg:gap-[59em] items-center text-[#585858] px-5 md:px-10 py-5">
                 <div className="flex items-center gap-1">
                     <p className='text-lg md:text-2xl bg-gradient-to-r from-blue-500 via-green-500 to-teal-500 bg-clip-text text-transparent'>Onion </p>
                 <span ><GiAtomicSlashes className='h-2 w-2 '/></span>
@@ -121,7 +158,7 @@ const Main = () => {
             {/* Main content area */}
             <div className="flex-1 ">
                     {loading ? (
-                        <div className="lg:px-40 py-6">
+                        <div className="lg:px-40 px-0 py-6">
                             <div className="flex items-center gap-2 rounded-lg p-5 mb-3">
                                 <img src="/assets/avater.png" alt="Avater" />
                                 <p className="text-gray-800">{lastPrompt || prompt || 'Thinking...'}</p>
@@ -129,28 +166,28 @@ const Main = () => {
                             <div className="flex items-start gap-3 rounded-lg p-5">
                                 <span ><GiAtomicSlashes className='h-5 w-5 '/></span>
                                 <div className="loader w-full flex flex-col gap-2">
-                                    <div className="h-7 rounded bg-gradient-to-r from-blue-500 via-green-100 to-teal-500 animate-pulse" />
-                                    <div className="h-7 rounded bg-gradient-to-r from-blue-500 via-green-100 to-teal-500 animate-pulse" />
-                                    <div className="h-7 rounded bg-gradient-to-r from-blue-500 via-green-100 to-teal-500 animate-pulse" />
+                                    <div className="h-4 md:h-7 rounded bg-gradient-to-r from-blue-500 via-green-100 to-teal-500 animate-pulse" />
+                                    <div className="h-4 md:h-7 rounded bg-gradient-to-r from-blue-500 via-green-100 to-teal-500 animate-pulse" />
+                                    <div className="h-4 md:h-7 rounded bg-gradient-to-r from-blue-500 via-green-100 to-teal-500 animate-pulse" />
                                 </div>
                             </div>
                         </div>
                     ) : response ? (
-                        <div className="lg:px-40 py-6 overflow-y-auto">
+                        <div className="lg:px-40 px-0 py-6 overflow-y-auto">
                             <div className="flex items-center gap-2  rounded-lg p-5 mb-3">
                                 <img src="/assets/avater.png" alt="Avater" />
                                 <p className="text-gray-800">{lastPrompt || prompt}</p>
                             </div>
                             <div className="flex items-start gap-3 rounded-lg p-5 ">
                                 <span ><GiAtomicSlashes className='h-5 w-5 '/></span>
-                                <p className="text-gray-700 mt-2 whitespace-pre-wrap ">{response}</p>
+                                <p className="text-gray-700 mt-2 whitespace-pre-wrap text-[10px] md:text-[20px]">{displayedResponse}</p>
                             </div>
                         </div>
                     ) : (
-                    <div className="py-20 px-5  lg:px-40">
-                        <div className="greet text-gray-300 text-4xl font-bold">
-                            <span className='text-[20px] font-extrabold bg-gradient-to-r from-blue-500 via-green-500 to-teal-500 bg-clip-text text-transparent'>Hello, Hardy.</span>
-                            <p className='text-[20px] lg:text-2xl'>How can I help you today?</p>
+                    <div className="py-20 px-7 lg:px-30">
+                        <div className=" text-gray-300 text-4xl font-bold">
+                            <span className='text-[20px] lg:text-[40px] font-extrabold bg-gradient-to-r from-blue-500 via-green-500 to-teal-500 bg-clip-text text-transparent'>Hello, World.</span>
+                            <p className='text-[20px] lg:text-[40px]'>How can I help you today?</p>
                         </div>
                         <div className="grid grid-cols-4 gap-2 md:gap-5 pt-5">
                             <div
@@ -188,8 +225,8 @@ const Main = () => {
 
             {/* Input area - fixed at bottom */}
                 {/* Input area - stays at bottom of main column */}
-                    <div className="fixed bottom-4 right-18 md:right-8 xl:right-40 2xl:left-80 w-[200px] md:w-[600px] mx-auto lg:min-w-[1000px] mt-30 px-0 md:px-10 py-3 bg-white">
-                    <div className="w-[250px] md:w-lg lg:w-[850px] mx-auto flex justify-between px-5 rounded-2xl items-center bg-[#f0f4f9] overflow-hidden">
+                    <div className="fixed bottom-1  right-3 lg:right-20 xl:right-50 2xl:left-80 w-full md:w-[620px] mx-auto lg:min-w-[950px] mt-0 px-10 md:px-10 py-3 bg-white">
+                    <div className="w-[315px] md:w-lg lg:w-[850px] mx-auto flex justify-between px-5 rounded-2xl items-center bg-[#f0f4f9] overflow-hidden">
                     <textarea
                         placeholder='Ask me anything...'
                         value={prompt}
@@ -211,12 +248,14 @@ const Main = () => {
                                 setLoading(true);
                                 setError('');
                                 setResponse('');
+                                setIsTyping(false);
                                 // use file name (or prompt provided in input) as lastPrompt
                                 const filePrompt = prompt || f.name;
                                 setLastPrompt(filePrompt);
                                 try {
                                     const result = await callGenAI(f, { prompt: prompt });
                                     setResponse(result);
+                                    setIsTyping(true); // Start typing effect
                                     const entry = { id: Date.now(), prompt: filePrompt, response: result, fileName: f.name };
                                     setPrevPrompts((p) => [entry, ...p]);
                                 } catch (err) {
@@ -248,7 +287,7 @@ const Main = () => {
                     
                 </div>
                  {error && <p className="text-red-500 text-center text-sm mt-2">Error: {error}</p>}
-                <p className='text-[7px] lg:text-[12px] my-3 text-center font-bold text-gray-400'>
+                <p className='text-[5px] md:text-[7px] lg:text-[12px] my-3 text-center font-bold text-gray-400'>
                     Onions may display inaccurate info, including about people, so double-check its responses.
                 </p>
                

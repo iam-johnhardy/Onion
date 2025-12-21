@@ -7,12 +7,23 @@ import { LuBadgeHelp } from "react-icons/lu";
 import { GiAtomicSlashes } from "react-icons/gi";
 
 const Sidebar = () => {
-    const [extended, setExtended] = useState(true);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [extended, setExtended] = useState(window.innerWidth >= 768);
     const [history, setHistory] = useState([]);
 
     function toggleSidebar(){
         setExtended(!extended);
     }
+
+    useEffect(() => {
+        const handleResize = () => {
+            const mobile = window.innerWidth < 768;
+            setIsMobile(mobile);
+            if (mobile) setExtended(false);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         try {
@@ -40,7 +51,7 @@ const Sidebar = () => {
                 const data = e.detail;
                 setHistory(Array.isArray(data) ? data : []);
             } catch (err) {
-                // ignore
+                
             }
         }
         window.addEventListener('onions:historyUpdated', onHistoryUpdated);
@@ -56,6 +67,8 @@ const Sidebar = () => {
     };
 
     return (
+        <>
+        {!isMobile && (
         <div className="min-h-screen max-w-[200px] inline-flex flex-col justify-between bg-[#f0f4f9] p-4  text-gray-800">
             <div className="">
                 <GiAtomicSlashes onClick={toggleSidebar} className='cursor-pointer w-5 md:w-7 h-5 md:h-7'/>
@@ -97,6 +110,8 @@ const Sidebar = () => {
             </div>
 
         </div>
+        )}
+        </>
     )
 }
 

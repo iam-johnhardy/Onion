@@ -6,12 +6,12 @@ function App() {
 
   return (
     <div className="flex">
-   <div className="fixed">
-     <Sidebar />
-   </div>
-    <Main/>
+      <div className="fixed">
+        <Sidebar />
+      </div>
+      <Main />
     </div>
- 
+
   )
 }
 
